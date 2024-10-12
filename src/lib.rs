@@ -1,9 +1,13 @@
 #![allow(unused, warnings)]
 
+mod ast;
+mod eval;
 mod lexer;
 mod parser;
 mod token;
 
-pub use lexer::Lexer;
-pub use parser::Parser;
-pub use token::Token;
+pub use ast::*;
+pub use eval::*;
+pub use lexer::*;
+pub use parser::*;
+pub use token::*;

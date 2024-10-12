@@ -105,7 +105,8 @@ fn punctuation() {
     assert_eq!(lex(":"), vec![Colon]);
     assert_eq!(lex("::"), vec![DoubleColon]);
     assert_eq!(lex("."), vec![Dot]);
-    // assert_eq!(lex("=>"), vec![ArrowRight]);
+    assert_eq!(lex("->"), vec![Arrow]);
+    assert_eq!(lex("=>"), vec![ArrowRight]);
     assert_eq!(lex("@"), vec![At]);
     assert_eq!(lex("?"), vec![Question]);
     assert_eq!(lex(";"), vec![Semicolon]);
@@ -114,25 +115,8 @@ fn punctuation() {
     assert_eq!(lex("{"), vec![OpenBrace]);
     assert_eq!(lex("}"), vec![CloseBrace]);
     assert_eq!(lex(","), vec![Comma]);
+    assert_eq!(lex("_"), vec![Underscore]);
 }
-
-// #[test]
-// fn pattern_matching() {
-//     assert_eq!(lex("|"), vec![Pipe]);
-//     assert_eq!(lex("_"), vec![Underscore]);
-// }
-
-// #[test]
-// fn comments() {
-//     assert_eq!(
-//         lex("// This is a comment"),
-//         vec![Comment(" This is a comment")]
-//     );
-//     assert_eq!(
-//         lex("/* This is a\nmultiline comment */"),
-//         vec![Comment(" This is a\nmultiline comment ")]
-//     );
-// }
 
 #[test]
 fn complex_expressions() {
@@ -165,6 +149,110 @@ fn complex_expressions() {
             Plus,
             Identifier("b"),
             CloseBrace,
+        ]
+    );
+
+    assert_eq!(
+        lex("let result = (10 - 5) * (3 + 2) / 2.5"),
+        vec![
+            Let,
+            Identifier("result"),
+            Assign,
+            OpenParen,
+            Int("10"),
+            Minus,
+            Int("5"),
+            CloseParen,
+            Multiply,
+            OpenParen,
+            Int("3"),
+            Plus,
+            Int("2"),
+            CloseParen,
+            Divide,
+            Float("2.5"),
+        ]
+    );
+
+    assert_eq!(
+        lex("if x > 0 { print(x) } else { print(-x) }"),
+        vec![
+            If,
+            Identifier("x"),
+            GreaterThan,
+            Int("0"),
+            OpenBrace,
+            Identifier("print"),
+            OpenParen,
+            Identifier("x"),
+            CloseParen,
+            CloseBrace,
+            Else,
+            OpenBrace,
+            Identifier("print"),
+            OpenParen,
+            Minus,
+            Identifier("x"),
+            CloseParen,
+            CloseBrace,
+        ]
+    );
+
+    assert_eq!(
+        lex("while i <= 10 && j >= 0 { i += 1; j -= 1 }"),
+        vec![
+            While,
+            Identifier("i"),
+            LessEqual,
+            Int("10"),
+            And,
+            Identifier("j"),
+            GreaterEqual,
+            Int("0"),
+            OpenBrace,
+            Identifier("i"),
+            PlusAssign,
+            Int("1"),
+            Semicolon,
+            Identifier("j"),
+            MinusAssign,
+            Int("1"),
+            CloseBrace,
+        ]
+    );
+
+    assert_eq!(
+        lex(r#"let message = "Hello, world!"; let is_valid = true;"#),
+        vec![
+            Let,
+            Identifier("message"),
+            Assign,
+            Str("Hello, world!"),
+            Semicolon,
+            Let,
+            Identifier("is_valid"),
+            Assign,
+            Bool(true),
+            Semicolon,
+        ]
+    );
+
+    assert_eq!(
+        lex(r#"let _hello = "Hello, world!"; match _hello { _ => _hello };"#),
+        vec![
+            Let,
+            Identifier("_hello"),
+            Assign,
+            Str("Hello, world!"),
+            Semicolon,
+            Match,
+            Identifier("_hello"),
+            OpenBrace,
+            Underscore,
+            ArrowRight,
+            Identifier("_hello"),
+            CloseBrace,
+            Semicolon,
         ]
     );
 }

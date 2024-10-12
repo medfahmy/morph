@@ -1,20 +1,30 @@
-use wzn::Lexer;
+use std::io::{stdin, stdout, Write};
+use wzn::{Lexer, Token};
 
 fn main() {
-    // let lexer = Lexer::new("let x = 10; let mut y = x + 1;");
+    let input = "\"Hello World\"";
+    let lexer = Lexer::new(input);
 
-    // let lexer = Lexer::new("   \"hello\"   ;");
-    // let lexer = Lexer::new("let s = \"hello\";");
+    let tokens: Vec<_> = lexer.collect();
+    println!("{:?}", tokens);
 
-    // let mut lexer = Lexer::new("   let id   = ;");
-    // let lexer = Lexer::new("let id =  14.04 ;");
-    let input = "let  id 43 23.23;";
-    let mut lexer = Lexer::new(input);
-
-    for i in 0..10 {
-        println!("{:?}", lexer.next());
-    }
-
-    // let tokens: Vec<_> = lexer.collect();
-    // println!("{:?}", tokens);
+    // let stdin = stdin();
+    // let mut stdout = stdout();
+    //
+    // loop {
+    //     print!(">> ");
+    //     stdout.flush().unwrap();
+    //     let mut buf = String::new();
+    //     stdin.read_line(&mut buf).unwrap();
+    //
+    //     if errors.is_empty() {
+    //         println!("{}", program.eval(&mut env));
+    //     } else {
+    //         println!("parser errors: ");
+    //
+    //         for error in errors {
+    //             println!("- {}", error);
+    //         }
+    //     }
+    // }
 }

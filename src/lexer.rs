@@ -1,13 +1,9 @@
 use crate::Token::{self, *};
-use std::iter::Peekable;
-use std::str::Chars;
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
     input: &'a str,
     cursor: usize,
-    line: usize,
-    row: usize,
 }
 
 impl<'a> Iterator for Lexer<'a> {
@@ -17,11 +13,11 @@ impl<'a> Iterator for Lexer<'a> {
         self.skip_whitespace();
 
         let next = self.curr().map(|curr| match curr {
-            c if c.is_alphabetic() || c == '_' => self.read_lexeme(),
-            c if c.is_numeric() => self.read_number(),
+            ch if ch.is_alphabetic() || ch == '_' => self.read_symbol(),
+            ch if ch.is_numeric() => self.read_number(),
             '\'' => self.read_char(),
-            '"' => self.read_str(),
-            _ => self.read_symbol(),
+            '"' => self.read_string(),
+            _ => self.read_operator(),
         });
 
         self.bump();
@@ -31,32 +27,20 @@ impl<'a> Iterator for Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
-        Lexer {
-            input,
-            cursor: 0,
-            line: 1,
-            row: 1,
-        }
+        Lexer { input, cursor: 0 }
     }
 
-    fn curr(&mut self) -> Option<char> {
+    fn curr(&self) -> Option<char> {
         self.input.chars().nth(self.cursor)
     }
 
-    fn peek(&mut self) -> Option<char> {
+    fn peek(&self) -> Option<char> {
         self.input.chars().nth(self.cursor + 1)
     }
 
     fn bump(&mut self) {
-        if self.cursor <= self.input.len() {
+        if self.cursor < self.input.len() {
             self.cursor += 1;
-
-            if self.peek() == Some('\n') {
-                self.line += 1;
-                self.row = 1;
-            } else {
-                self.row += 1;
-            }
         }
     }
 
@@ -70,7 +54,13 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_lexeme(&mut self) -> Token<'a> {
+    fn read_symbol(&mut self) -> Token<'a> {
+        if let Some('_') = self.curr() {
+            if self.peek().is_none() || self.peek().is_some_and(|peek| peek.is_whitespace()) {
+                return Underscore;
+            }
+        }
+
         let start = self.cursor;
 
         while let Some(c) = self.peek() {
@@ -149,38 +139,24 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_str(&mut self) -> Token<'a> {
+    fn read_string(&mut self) -> Token<'a> {
         self.bump();
         let start = self.cursor;
 
-        while let Some(c) = self.curr() {
-            if c.is_alphanumeric() || c == '_' {
-                self.bump();
-            } else {
+        while let Some(ch) = self.peek() {
+            self.bump();
+
+            if ch == '"' {
                 break;
             }
         }
 
         let symbol = &self.input[start..self.cursor];
 
-        if let Some('"') = self.curr() {
-            self.bump();
-            Str(symbol)
-        } else {
-            Unknown
-        }
+        Str(symbol)
     }
 
-    fn extend_or(&mut self, peek: char, extended: Token<'a>, base: Token<'a>) -> Token<'a> {
-        if let Some(peek) = self.peek() {
-            self.bump();
-            extended
-        } else {
-            base
-        }
-    }
-
-    fn read_symbol(&mut self) -> Token<'a> {
+    fn read_operator(&mut self) -> Token<'a> {
         match self.curr() {
             Some(curr) => match curr {
                 '+' => {
@@ -191,58 +167,141 @@ impl<'a> Lexer<'a> {
                         Plus
                     }
                 }
-                '=' => self.extend_or('=', Equal, Assign),
-                '-' => self.extend_or('=', MinusAssign, Minus),
-                '/' => self.extend_or('=', DivideAssign, Divide),
-                '%' => self.extend_or('=', ModuloAssign, Modulo),
+                '=' => {
+                    if let Some('>') = self.peek() {
+                        self.bump();
+                        ArrowRight
+                    } else if let Some('=') = self.peek() {
+                        self.bump();
+                        Equal
+                    } else {
+                        Assign
+                    }
+                }
+                '-' => {
+                    if let Some('>') = self.peek() {
+                        self.bump();
+                        Arrow
+                    } else if let Some('=') = self.peek() {
+                        self.bump();
+                        MinusAssign
+                    } else {
+                        Minus
+                    }
+                }
+                '/' => {
+                    if let Some('=') = self.peek() {
+                        self.bump();
+                        DivideAssign
+                    } else {
+                        Divide
+                    }
+                }
+                '%' => {
+                    if let Some('=') = self.peek() {
+                        self.bump();
+                        ModuloAssign
+                    } else {
+                        Modulo
+                    }
+                }
                 '<' => {
                     if let Some('<') = self.peek() {
                         self.bump();
-                        self.extend_or('=', LeftShiftAssign, LeftShift)
+
+                        if let Some('=') = self.peek() {
+                            self.bump();
+                            LeftShiftAssign
+                        } else {
+                            LeftShift
+                        }
+                    } else if let Some('=') = self.peek() {
+                        self.bump();
+                        LessEqual
                     } else {
-                        self.extend_or('=', LessEqual, LessThan)
+                        LessThan
                     }
                 }
                 '>' => {
                     if let Some('>') = self.peek() {
                         self.bump();
-                        self.extend_or('=', RightShiftAssign, RightShift)
+
+                        if let Some('=') = self.peek() {
+                            self.bump();
+                            RightShiftAssign
+                        } else {
+                            RightShift
+                        }
+                    } else if let Some('=') = self.peek() {
+                        self.bump();
+                        GreaterEqual
                     } else {
-                        self.extend_or('=', GreaterEqual, GreaterThan)
+                        GreaterThan
                     }
                 }
-                '!' => self.extend_or('=', NotEqual, Not),
+                '!' => {
+                    if let Some('=') = self.peek() {
+                        self.bump();
+                        NotEqual
+                    } else {
+                        Not
+                    }
+                }
                 '&' => {
                     if let Some('&') = self.peek() {
                         self.bump();
                         And
+                    } else if let Some('=') = self.peek() {
+                        self.bump();
+                        BitAndAssign
                     } else {
-                        self.extend_or('=', BitAndAssign, BitAnd)
+                        BitAnd
                     }
                 }
                 '|' => {
                     if let Some('|') = self.peek() {
                         self.bump();
                         Or
+                    } else if let Some('=') = self.peek() {
+                        self.bump();
+                        BitOrAssign
                     } else {
-                        self.extend_or('=', BitOrAssign, BitOr)
+                        BitOr
                     }
                 }
                 '*' => {
                     if let Some('*') = self.peek() {
                         self.bump();
-                        self.extend_or('=', PowerAssign, Power)
-                    } else {
+
                         if let Some('=') = self.peek() {
                             self.bump();
-                            MultiplyAssign
+                            PowerAssign
                         } else {
-                            Multiply
+                            Power
                         }
+                    } else if let Some('=') = self.peek() {
+                        self.bump();
+                        MultiplyAssign
+                    } else {
+                        Multiply
                     }
                 }
-                '^' => self.extend_or('=', BitXorAssign, BitXor),
-                ':' => self.extend_or(':', DoubleColon, Colon),
+                '^' => {
+                    if let Some('=') = self.peek() {
+                        self.bump();
+                        BitXorAssign
+                    } else {
+                        BitXor
+                    }
+                }
+                ':' => {
+                    if let Some(':') = self.peek() {
+                        self.bump();
+                        DoubleColon
+                    } else {
+                        Colon
+                    }
+                }
                 '~' => BitNot,
                 ';' => Semicolon,
                 ',' => Comma,
