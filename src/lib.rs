@@ -11,3 +11,5 @@ pub use eval::*;
 pub use lexer::*;
 pub use parser::*;
 pub use token::*;
+
+mod macros;

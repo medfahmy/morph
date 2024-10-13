@@ -1,9 +1,11 @@
-use crate::Token::{self, *};
+use crate::{Token, TokenKind, TokenKind::*};
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
     input: &'a str,
     cursor: usize,
+    line: usize,
+    column: usize,
 }
 
 impl<'a> Iterator for Lexer<'a> {
@@ -12,7 +14,7 @@ impl<'a> Iterator for Lexer<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespace();
 
-        let next = self.curr().map(|curr| match curr {
+        let kind = self.curr().map(|curr| match curr {
             ch if ch.is_alphabetic() || ch == '_' => self.read_symbol(),
             ch if ch.is_numeric() => self.read_number(),
             '\'' => self.read_char(),
@@ -21,13 +23,21 @@ impl<'a> Iterator for Lexer<'a> {
         });
 
         self.bump();
-        next
+
+        kind.map(|kind| Token {
+            kind,
+            line: self.line,
+            column: self.column,
+        })
     }
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
-        Lexer { input, cursor: 0 }
+        Lexer { input
+            , cursor: 0 
+        , line: 1,
+        column: 1}
     }
 
     fn curr(&self) -> Option<char> {
@@ -41,6 +51,13 @@ impl<'a> Lexer<'a> {
     fn bump(&mut self) {
         if self.cursor < self.input.len() {
             self.cursor += 1;
+
+            if let Some('\n') = self.curr() {
+                self.line += 1;
+                self.column = 0;
+            } else {
+                self.column += 1;
+            }
         }
     }
 
@@ -54,7 +71,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_symbol(&mut self) -> Token<'a> {
+    fn read_symbol(&mut self) -> TokenKind<'a> {
         if let Some('_') = self.curr() {
             if self.peek().is_none() || self.peek().is_some_and(|peek| peek.is_whitespace()) {
                 return Underscore;
@@ -99,11 +116,12 @@ impl<'a> Lexer<'a> {
             "as" => As,
             "const" => Const,
             "static" => Static,
+            "spawn" => Spawn,
             _ => Identifier(symbol),
         }
     }
 
-    fn read_number(&mut self) -> Token<'a> {
+    fn read_number(&mut self) -> TokenKind<'a> {
         let start = self.cursor;
 
         while let Some(c) = self.peek() {
@@ -123,7 +141,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_char(&mut self) -> Token<'a> {
+    fn read_char(&mut self) -> TokenKind<'a> {
         self.bump();
         if let Some(ch) = self.curr() {
             self.bump();
@@ -139,7 +157,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_string(&mut self) -> Token<'a> {
+    fn read_string(&mut self) -> TokenKind<'a> {
         self.bump();
         let start = self.cursor;
 
@@ -156,7 +174,7 @@ impl<'a> Lexer<'a> {
         Str(symbol)
     }
 
-    fn read_operator(&mut self) -> Token<'a> {
+    fn read_operator(&mut self) -> TokenKind<'a> {
         match self.curr() {
             Some(curr) => match curr {
                 '+' => {

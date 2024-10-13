@@ -1,5 +1,5 @@
 use crate::*;
-use Token::*;
+use TokenKind::*;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -8,7 +8,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(input: &'a str) -> Self {
+    pub fn parse(input: &'a str) -> Program<'a> {
         let mut parser = Self {
             lexer: Lexer::new(input),
             curr: None,
@@ -18,17 +18,16 @@ impl<'a> Parser<'a> {
         parser.advance();
         parser.advance();
 
-        parser
-    }
-
-    pub fn parse(&mut self) -> Program<'a> {
         let mut program = Program::new();
 
-        while let Some(token) = &self.curr {
-            let result = match token {
-                 Let => self.parse_let_statement(),
-                 Return => self.parse_return_statement(),
-                 _ => todo!(),
+        while let Some(token) = &parser.curr {
+            let result = match token.kind {
+                Let => parser.parse_let_statement(),
+                Return => parser.parse_return_statement(),
+                Loop | For | While => parser.parse_loop_statement(),
+                Function => parser.parse_function_statement(),
+                Spawn => parser.parse_spawn_statement(),
+                _ => todo!(),
             };
 
             program.push(result);
@@ -47,6 +46,18 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_return_statement(&mut self) -> ParseResult<'a> {
+        todo!()
+    }
+
+    pub fn parse_loop_statement(&mut self) -> ParseResult<'a> {
+        todo!()
+    }
+
+    pub fn parse_function_statement(&mut self) -> ParseResult<'a> {
+        todo!()
+    }
+
+    pub fn parse_spawn_statement(&mut self) -> ParseResult<'a> {
         todo!()
     }
 }

@@ -1,8 +1,15 @@
 use std::fmt;
-use Token::*;
+use TokenKind::*;
 
 #[derive(Debug, PartialEq)]
-pub enum Token<'a> {
+pub struct Token<'a> {
+    pub kind: TokenKind<'a>,
+    pub line: usize,
+    pub column: usize,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum TokenKind<'a> {
     // Identifiers (e.g., variable names)
     Identifier(&'a str),
 
@@ -28,6 +35,7 @@ pub enum Token<'a> {
     Match,
     Break,
     Continue,
+    Spawn,
 
     // Boolean Operators
     And,          // &&
@@ -122,7 +130,7 @@ pub enum Token<'a> {
 
 impl fmt::Display for Token<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let token_str = match self {
+        let token_str = match &self.kind {
             Identifier(val) => return write!(f, "{}", val),
             Int(val) => return write!(f, "{}", val),
             Float(val) => return write!(f, "{}", val),

@@ -1,30 +1,22 @@
 use std::io::{stdin, stdout, Write};
-use wzn::{Lexer, Token};
+use morph::{Parser, Env};
+
 
 fn main() {
-    let input = "\"Hello World\"";
-    let lexer = Lexer::new(input);
+    let stdin = stdin();
+    let mut stdout = stdout();
 
-    let tokens: Vec<_> = lexer.collect();
-    println!("{:?}", tokens);
+    loop {
+        print!(">> ");
+        stdout.flush().unwrap();
+        let mut buf = String::new();
+        stdin.read_line(&mut buf).unwrap();
 
-    // let stdin = stdin();
-    // let mut stdout = stdout();
-    //
-    // loop {
-    //     print!(">> ");
-    //     stdout.flush().unwrap();
-    //     let mut buf = String::new();
-    //     stdin.read_line(&mut buf).unwrap();
-    //
-    //     if errors.is_empty() {
-    //         println!("{}", program.eval(&mut env));
-    //     } else {
-    //         println!("parser errors: ");
-    //
-    //         for error in errors {
-    //             println!("- {}", error);
-    //         }
-    //     }
-    // }
+        let program = Parser::parse(&buf);
+
+        for result in program.results() {
+            match result {
+            }
+        }
+    }
 }

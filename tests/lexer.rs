@@ -1,7 +1,7 @@
-use wzn::{Lexer, Token, Token::*};
+use morph::{Lexer, TokenKind, TokenKind::*};
 
-fn lex<'a>(input: &'a str) -> Vec<Token> {
-    Lexer::new(input).collect()
+fn lex<'a>(input: &'a str) -> Vec<TokenKind> {
+    Lexer::new(input).map(|token| token.kind).collect()
 }
 
 #[test]
@@ -251,6 +251,53 @@ fn complex_expressions() {
             Underscore,
             ArrowRight,
             Identifier("_hello"),
+            CloseBrace,
+            Semicolon,
+        ]
+    );
+
+    assert_eq!(
+        lex("use std.collections.HashMap;"),
+        vec![
+            Use,
+            Identifier("std"),
+            Dot,
+            Identifier("collections"),
+            Dot,
+            Identifier("HashMap"),
+            Semicolon,
+        ]
+    );
+
+    assert_eq!(
+        lex(r#"
+        add | Int, Int -> Int;
+        add = fn(a, b) -> {
+            a + b
+        };
+            "#),
+        vec![
+            Identifier("add"),
+            Pipe,
+            Identifier("Int"),
+            Comma,
+            Identifier("Int"),
+            Arrow,
+            Identifier("Int"),
+            Semicolon,
+            Identifier("add"),
+            Assign,
+            Function,
+            OpenParen,
+            Identifier("a"),
+            Comma,
+            Identifier("b"),
+            CloseParen,
+            Arrow,
+            OpenBrace,
+            Identifier("a"),
+            Plus,
+            Identifier("b"),
             CloseBrace,
             Semicolon,
         ]

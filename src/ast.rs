@@ -1,5 +1,4 @@
 use crate::Token;
-
 use std::collections::HashMap;
 
 pub struct Program<'a> {
@@ -12,8 +11,8 @@ pub struct Error<'a> {
 }
 
 pub enum ParseResult<'a> {
-    Statement(Statement<'a>),
-    Error(Error<'a>),
+    Ok(Statement<'a>),
+    Err(Error<'a>),
 }
 
 impl<'a> Program<'a> {
@@ -23,8 +22,8 @@ impl<'a> Program<'a> {
         }
     }
 
-    pub fn push(&mut self, result: ParseResult<'a>) -> Self {
-        todo!()
+    pub fn push(&mut self, result: ParseResult<'a>) {
+        self.results.push(result)
     }
 }
 
