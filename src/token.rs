@@ -1,34 +1,33 @@
 use std::fmt;
 use TokenKind::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token<'a> {
-    pub kind: TokenKind<'a>,
+    pub kind: TokenKind,
+    pub literal: &'a str,
     pub line: usize,
     pub column: usize,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum TokenKind<'a> {
-    // Identifiers (e.g., variable names)
-    Identifier(&'a str),
+#[derive(Debug, Clone, PartialEq)]
+pub enum TokenKind {
+    // Identifiers
+    Identifier,
 
-    // Primitives
-    Int(&'a str),
-    Float(&'a str),
-    Bool(bool),
-    Char(char),
-    Str(&'a str),
+    // Literals
+    Bool,  //
+    Int,   // 69
+    Float, // 1.0, 4.20
+    Char,  // 'a'
+    Str,   // "hello world"
 
-    // Keywords
-    Let,
+    // Mutable binding
     Mut,
     Use,
 
     // Control Flow
     If,
     Else,
-    ElseIf,
     While,
     For,
     Loop,
@@ -36,6 +35,42 @@ pub enum TokenKind<'a> {
     Break,
     Continue,
     Spawn,
+
+    // Type-related
+    Type,
+    Impl,
+    Trait,
+    Where,
+    As,
+    Derive,
+
+    // Function-related
+    Function,
+    Return,
+    Arrow, // ->
+
+    // Punctuation
+    Ampersand,    // &
+    Pipe,         // |
+    Caret,        // ^
+    Tilde,        // ~
+    LeftShift,    // <<
+    RightShift,   // >>
+    Colon,        // :
+    DoubleColon,  // ::
+    Dot,          // .
+    DoubleArrow,   // =>
+    At,           // @
+    Question,     // ?
+    Semicolon,    // ;
+    OpenParen,    // (
+    CloseParen,   // )
+    OpenBracket,  // [
+    CloseBracket, // ]
+    OpenBrace,    // {
+    CloseBrace,   // }
+    Comma,        // ,
+    Underscore,   // _
 
     // Boolean Operators
     And,          // &&
@@ -56,14 +91,6 @@ pub enum TokenKind<'a> {
     Modulo,   // %
     Power,    // **
 
-    // Bitwise Operators
-    BitAnd,     // &
-    BitOr,      // |
-    BitXor,     // ^
-    BitNot,     // ~
-    LeftShift,  // <<
-    RightShift, // >>
-
     // Assignment Operators
     Assign,           // =
     PlusAssign,       // +=
@@ -78,140 +105,16 @@ pub enum TokenKind<'a> {
     LeftShiftAssign,  // <<=
     RightShiftAssign, // >>=
 
-    // Type-related
-    Type,   // type
-    Struct, // struct
-    Enum,   // enum
-    Impl,   // impl
-    Trait,  // trait
-    Where,  // where
-    As,     // as (casting)
-
-    // Function-related
-    Function,
-    Return,
-    ClosureStart, // |
-    Arrow,        // ->
-
-    // Punctuation
-    Colon,        // :
-    DoubleColon,  // ::
-    Dot,          // .
-    ArrowRight,   // =>
-    At,           // @
-    Question,     // ?
-    Semicolon,    // ;
-    OpenParen,    // (
-    CloseParen,   // )
-    OpenBracket,  // [
-    CloseBracket, // ]
-    OpenBrace,    // {
-    CloseBrace,   // }
-    Comma,        // ,
-
-    // Pattern Matching
-    Pipe,       // |
-    Underscore, // _
-
     // Error Handling
     QuestionMark, // ?
 
     // Miscellaneous
     Pub,
     Const,
-    Static,
 
     // Comments
-    Comment(&'a str),
+    Comment,
 
     Unknown,
-    Eof,
-}
-
-impl fmt::Display for Token<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let token_str = match &self.kind {
-            Identifier(val) => return write!(f, "{}", val),
-            Int(val) => return write!(f, "{}", val),
-            Float(val) => return write!(f, "{}", val),
-            Bool(val) => return write!(f, "{}", val),
-            Char(val) => return write!(f, "{}", val),
-            Str(val) => return write!(f, "{}", val),
-            Let => "let",
-            Mut => "mut",
-            If => "if",
-            Else => "else",
-            ElseIf => "else if",
-            While => "while",
-            For => "for",
-            Loop => "loop",
-            Match => "match",
-            Break => "break",
-            Continue => "continue",
-            Return => "return",
-            And => "&&",
-            Or => "||",
-            Not => "!",
-            Equal => "==",
-            NotEqual => "!=",
-            LessThan => "<",
-            GreaterThan => ">",
-            LessEqual => "<=",
-            GreaterEqual => ">=",
-            Plus => "+",
-            Minus => "-",
-            Multiply => "*",
-            Divide => "/",
-            Modulo => "%",
-            Power => "**",
-            BitAnd => "&",
-            BitOr => "|",
-            BitXor => "^",
-            BitNot => "~",
-            LeftShift => "<<",
-            RightShift => ">>",
-            Assign => "=",
-            PlusAssign => "+=",
-            MinusAssign => "-=",
-            MultiplyAssign => "*=",
-            DivideAssign => "/=",
-            ModuloAssign => "%=",
-            BitAndAssign => "&=",
-            BitOrAssign => "|=",
-            BitXorAssign => "^=",
-            LeftShiftAssign => "<<=",
-            RightShiftAssign => ">>=",
-            Type => "type",
-            Struct => "struct",
-            Enum => "enum",
-            Impl => "impl",
-            Trait => "trait",
-            Where => "where",
-            As => "as",
-            Fn => "fn",
-            ClosureStart => "|",
-            Arrow => "->",
-            Colon => ":",
-            DoubleColon => "::",
-            Dot => ".",
-            ArrowRight => "=>",
-            At => "@",
-            Question => "?",
-            Semicolon => ";",
-            OpenParen => "(",
-            CloseParen => ")",
-            OpenBrace => "{",
-            CloseBrace => "}",
-            Comma => ",",
-            Pipe => "|",
-            Underscore => "_",
-            QuestionMark => "?",
-            Pub => "pub",
-            Const => "const",
-            Static => "static",
-            Comment(s) => return write!(f, "// {}", s),
-        };
-
-        write!(f, "{}", token_str)
-    }
+    UntermDoubleQuote,
 }

@@ -6,7 +6,6 @@ fn lex<'a>(input: &'a str) -> Vec<TokenKind> {
 
 #[test]
 fn keywords() {
-    assert_eq!(lex("let"), vec![Let]);
     assert_eq!(lex("mut"), vec![Mut]);
     assert_eq!(lex("if"), vec![If]);
     assert_eq!(lex("else"), vec![Else]);
@@ -17,39 +16,33 @@ fn keywords() {
     assert_eq!(lex("break"), vec![Break]);
     assert_eq!(lex("continue"), vec![Continue]);
     assert_eq!(lex("type"), vec![Type]);
-    assert_eq!(lex("struct"), vec![Struct]);
-    assert_eq!(lex("enum"), vec![Enum]);
     assert_eq!(lex("impl"), vec![Impl]);
     assert_eq!(lex("trait"), vec![Trait]);
     assert_eq!(lex("where"), vec![Where]);
     assert_eq!(lex("as"), vec![As]);
     assert_eq!(lex("pub"), vec![Pub]);
     assert_eq!(lex("const"), vec![Const]);
-    assert_eq!(lex("static"), vec![Static]);
     assert_eq!(lex("fn"), vec![Function]);
     assert_eq!(lex("return"), vec![Return]);
 }
 
 #[test]
 fn identifiers() {
-    assert_eq!(lex("foo"), vec![Identifier("foo")]);
-    assert_eq!(lex("bar123"), vec![Identifier("bar123")]);
-    assert_eq!(lex("_underscore"), vec![Identifier("_underscore")]);
+    assert_eq!(lex("foo"), vec![Identifier]);
+    assert_eq!(lex("bar123"), vec![Identifier]);
+    assert_eq!(lex("_underscore"), vec![Identifier]);
 }
 
 #[test]
 fn primitives() {
-    assert_eq!(lex("42"), vec![Int("42")]);
-    assert_eq!(lex("3.14"), vec![Float("3.14")]);
-    assert_eq!(lex("true"), vec![Bool(true)]);
-    assert_eq!(lex("false"), vec![Bool(false)]);
-    assert_eq!(lex("'a'"), vec![Char('a')]);
-    assert_eq!(lex("\"hello\""), vec![Str("hello")]);
+    assert_eq!(lex("42"), vec![Int]);
+    assert_eq!(lex("3.14"), vec![Float]);
+    assert_eq!(lex("true"), vec![Bool]);
+    assert_eq!(lex("false"), vec![Bool]);
+    assert_eq!(lex("'a'"), vec![Char]);
+    assert_eq!(lex("\"hello\""), vec![Str]);
 
-    assert_eq!(
-        lex("let  id 43 23.23;"),
-        vec![Let, Identifier("id"), Int("43"), Float("23.23"), Semicolon,]
-    );
+    assert_eq!(lex("id 43 23.23;"), vec![Identifier, Int, Float, Semicolon],);
 }
 
 #[test]
@@ -92,10 +85,10 @@ fn assignment_operators() {
 
 #[test]
 fn bitwise_operators() {
-    assert_eq!(lex("&"), vec![BitAnd]);
-    assert_eq!(lex("|"), vec![BitOr]);
-    assert_eq!(lex("^"), vec![BitXor]);
-    assert_eq!(lex("~"), vec![BitNot]);
+    assert_eq!(lex("&"), vec![Ampersand]);
+    assert_eq!(lex("|"), vec![Pipe]);
+    assert_eq!(lex("^"), vec![Caret]);
+    assert_eq!(lex("~"), vec![Tilde]);
     assert_eq!(lex("<<"), vec![LeftShift]);
     assert_eq!(lex(">>"), vec![RightShift]);
 }
@@ -121,56 +114,23 @@ fn punctuation() {
 #[test]
 fn complex_expressions() {
     assert_eq!(
-        lex("let x /= 5.0 + 3 * 2.203"),
-        vec![
-            Let,
-            Identifier("x"),
-            DivideAssign,
-            Float("5.0"),
-            Plus,
-            Int("3"),
-            Multiply,
-            Float("2.203"),
-        ]
+        lex("x /= 5.0 + 3 * 2.203"),
+        vec![Identifier, DivideAssign, Float, Plus, Int, Multiply, Float,]
     );
 
     assert_eq!(
         lex("fn add(a, b) { a + b }"),
         vec![
-            Function,
-            Identifier("add"),
-            OpenParen,
-            Identifier("a"),
-            Comma,
-            Identifier("b"),
-            CloseParen,
-            OpenBrace,
-            Identifier("a"),
-            Plus,
-            Identifier("b"),
-            CloseBrace,
+            Function, Identifier, OpenParen, Identifier, Comma, Identifier, CloseParen, OpenBrace,
+            Identifier, Plus, Identifier, CloseBrace,
         ]
     );
 
     assert_eq!(
-        lex("let result = (10 - 5) * (3 + 2) / 2.5"),
+        lex("result = (10 - 5) * (3 + 2) / 2.5"),
         vec![
-            Let,
-            Identifier("result"),
-            Assign,
-            OpenParen,
-            Int("10"),
-            Minus,
-            Int("5"),
-            CloseParen,
-            Multiply,
-            OpenParen,
-            Int("3"),
-            Plus,
-            Int("2"),
-            CloseParen,
-            Divide,
-            Float("2.5"),
+            Identifier, Assign, OpenParen, Int, Minus, Int, CloseParen, Multiply, OpenParen, Int,
+            Plus, Int, CloseParen, Divide, Float,
         ]
     );
 
@@ -178,21 +138,21 @@ fn complex_expressions() {
         lex("if x > 0 { print(x) } else { print(-x) }"),
         vec![
             If,
-            Identifier("x"),
+            Identifier,
             GreaterThan,
-            Int("0"),
+            Int,
             OpenBrace,
-            Identifier("print"),
+            Identifier,
             OpenParen,
-            Identifier("x"),
+            Identifier,
             CloseParen,
             CloseBrace,
             Else,
             OpenBrace,
-            Identifier("print"),
+            Identifier,
             OpenParen,
             Minus,
-            Identifier("x"),
+            Identifier,
             CloseParen,
             CloseBrace,
         ]
@@ -202,71 +162,41 @@ fn complex_expressions() {
         lex("while i <= 10 && j >= 0 { i += 1; j -= 1 }"),
         vec![
             While,
-            Identifier("i"),
+            Identifier,
             LessEqual,
-            Int("10"),
+            Int,
             And,
-            Identifier("j"),
+            Identifier,
             GreaterEqual,
-            Int("0"),
+            Int,
             OpenBrace,
-            Identifier("i"),
+            Identifier,
             PlusAssign,
-            Int("1"),
+            Int,
             Semicolon,
-            Identifier("j"),
+            Identifier,
             MinusAssign,
-            Int("1"),
+            Int,
             CloseBrace,
         ]
     );
 
     assert_eq!(
-        lex(r#"let message = "Hello, world!"; let is_valid = true;"#),
-        vec![
-            Let,
-            Identifier("message"),
-            Assign,
-            Str("Hello, world!"),
-            Semicolon,
-            Let,
-            Identifier("is_valid"),
-            Assign,
-            Bool(true),
-            Semicolon,
-        ]
+        lex(r#"message = "Hello, world!"; is_valid = true;"#),
+        vec![Identifier, Assign, Str, Semicolon, Identifier, Assign, Bool, Semicolon,]
     );
 
     assert_eq!(
-        lex(r#"let _hello = "Hello, world!"; match _hello { _ => _hello };"#),
+        lex(r#"_hello = "Hello, world!"; match _hello { _ => _hello };"#),
         vec![
-            Let,
-            Identifier("_hello"),
-            Assign,
-            Str("Hello, world!"),
-            Semicolon,
-            Match,
-            Identifier("_hello"),
-            OpenBrace,
-            Underscore,
-            ArrowRight,
-            Identifier("_hello"),
-            CloseBrace,
-            Semicolon,
+            Identifier, Assign, Str, Semicolon, Match, Identifier, OpenBrace, Underscore,
+            ArrowRight, Identifier, CloseBrace, Semicolon,
         ]
     );
 
     assert_eq!(
         lex("use std.collections.HashMap;"),
-        vec![
-            Use,
-            Identifier("std"),
-            Dot,
-            Identifier("collections"),
-            Dot,
-            Identifier("HashMap"),
-            Semicolon,
-        ]
+        vec![Use, Identifier, Dot, Identifier, Dot, Identifier, Semicolon,]
     );
 
     assert_eq!(
@@ -277,29 +207,9 @@ fn complex_expressions() {
         };
             "#),
         vec![
-            Identifier("add"),
-            Pipe,
-            Identifier("Int"),
-            Comma,
-            Identifier("Int"),
-            Arrow,
-            Identifier("Int"),
-            Semicolon,
-            Identifier("add"),
-            Assign,
-            Function,
-            OpenParen,
-            Identifier("a"),
-            Comma,
-            Identifier("b"),
-            CloseParen,
-            Arrow,
-            OpenBrace,
-            Identifier("a"),
-            Plus,
-            Identifier("b"),
-            CloseBrace,
-            Semicolon,
+            Identifier, Pipe, Identifier, Comma, Identifier, Arrow, Identifier, Semicolon,
+            Identifier, Assign, Function, OpenParen, Identifier, Comma, Identifier, CloseParen,
+            Arrow, OpenBrace, Identifier, Plus, Identifier, CloseBrace, Semicolon,
         ]
     );
 }

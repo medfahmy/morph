@@ -14,8 +14,11 @@ impl<'a> Iterator for Lexer<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.skip_whitespace();
 
-        let kind = self.curr().map(|curr| match curr {
-            ch if ch.is_alphabetic() || ch == '_' => self.read_symbol(),
+        let line = self.line;
+        let column = self.column;
+
+        let next = self.curr().map(|curr| match curr {
+            ch if ch.is_alphabetic() || ch == '_' => self.read_word(),
             ch if ch.is_numeric() => self.read_number(),
             '\'' => self.read_char(),
             '"' => self.read_string(),
@@ -24,20 +27,23 @@ impl<'a> Iterator for Lexer<'a> {
 
         self.bump();
 
-        kind.map(|kind| Token {
+        next.map(|(literal, kind)| Token {
+            literal,
             kind,
-            line: self.line,
-            column: self.column,
+            line,
+            column,
         })
     }
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
-        Lexer { input
-            , cursor: 0 
-        , line: 1,
-        column: 1}
+        Lexer {
+            input,
+            cursor: 0,
+            line: 1,
+            column: 1,
+        }
     }
 
     fn curr(&self) -> Option<char> {
@@ -52,7 +58,7 @@ impl<'a> Lexer<'a> {
         if self.cursor < self.input.len() {
             self.cursor += 1;
 
-            if let Some('\n') = self.curr() {
+            if let Some('\n') = self.peek() {
                 self.line += 1;
                 self.column = 0;
             } else {
@@ -71,14 +77,14 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_symbol(&mut self) -> TokenKind<'a> {
+    fn read_word(&mut self) -> (&'a str, TokenKind) {
+        let start = self.cursor;
+
         if let Some('_') = self.curr() {
             if self.peek().is_none() || self.peek().is_some_and(|peek| peek.is_whitespace()) {
-                return Underscore;
+                return (&self.input[start..start + 1], Underscore);
             }
         }
-
-        let start = self.cursor;
 
         while let Some(c) = self.peek() {
             if c.is_alphanumeric() || c == '_' {
@@ -88,13 +94,11 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let symbol = &self.input[start..self.cursor + 1];
+        let word = &self.input[start..self.cursor + 1];
 
-        match symbol {
-            "false" => Bool(false),
-            "true" => Bool(true),
+        let kind = match word {
+            "true" | "false" => Bool,
             "use" => Use,
-            "let" => Let,
             "mut" => Mut,
             "if" => If,
             "else" => Else,
@@ -108,20 +112,20 @@ impl<'a> Lexer<'a> {
             "pub" => Pub,
             "fn" => Function,
             "type" => Type,
-            "struct" => Struct,
-            "enum" => Enum,
             "impl" => Impl,
             "trait" => Trait,
             "where" => Where,
             "as" => As,
             "const" => Const,
-            "static" => Static,
             "spawn" => Spawn,
-            _ => Identifier(symbol),
-        }
+            "derive" => Derive,
+            _ => Identifier,
+        };
+
+        (word, kind)
     }
 
-    fn read_number(&mut self) -> TokenKind<'a> {
+    fn read_number(&mut self) -> (&'a str, TokenKind) {
         let start = self.cursor;
 
         while let Some(c) = self.peek() {
@@ -133,50 +137,56 @@ impl<'a> Lexer<'a> {
         }
 
         let number_str = &self.input[start..self.cursor + 1];
-
-        if number_str.contains('.') {
-            Float(number_str)
-        } else {
-            Int(number_str)
-        }
+        let kind = if number_str.contains(".") { Float } else { Int };
+        (number_str, kind)
     }
 
-    fn read_char(&mut self) -> TokenKind<'a> {
+    fn read_char(&mut self) -> (&'a str, TokenKind) {
+        let start = self.cursor;
         self.bump();
-        if let Some(ch) = self.curr() {
+        let ch = &self.input[self.cursor..self.cursor + 1];
+
+        if self.curr().is_some() {
             self.bump();
 
             if let Some('\'') = self.curr() {
                 self.bump();
-                Char(ch)
+                (ch, Char)
             } else {
-                Unknown
+                (&self.input[start..self.cursor + 1], Unknown)
             }
         } else {
-            Unknown
+            (&self.input[start..self.cursor + 1], Unknown)
         }
     }
 
-    fn read_string(&mut self) -> TokenKind<'a> {
+    fn read_string(&mut self) -> (&'a str, TokenKind) {
         self.bump();
         let start = self.cursor;
 
         while let Some(ch) = self.peek() {
             self.bump();
 
+            if ch == '\n' {
+                return (&self.input[start..self.cursor + 1], UntermDoubleQuote);
+            }
+
             if ch == '"' {
                 break;
             }
         }
 
-        let symbol = &self.input[start..self.cursor];
+        if self.peek().is_none() {
+            return (&self.input[start..self.cursor + 1], UntermDoubleQuote);
+        }
 
-        Str(symbol)
+        (&self.input[start..self.cursor], Str)
     }
 
-    fn read_operator(&mut self) -> TokenKind<'a> {
-        match self.curr() {
-            Some(curr) => match curr {
+    fn read_operator(&mut self) -> (&'a str, TokenKind) {
+        let start = self.cursor;
+        let kind = if let Some(curr) = self.curr() {
+            match curr {
                 '+' => {
                     if let Some('=') = self.peek() {
                         self.bump();
@@ -188,7 +198,7 @@ impl<'a> Lexer<'a> {
                 '=' => {
                     if let Some('>') = self.peek() {
                         self.bump();
-                        ArrowRight
+                        DoubleArrow
                     } else if let Some('=') = self.peek() {
                         self.bump();
                         Equal
@@ -273,7 +283,7 @@ impl<'a> Lexer<'a> {
                         self.bump();
                         BitAndAssign
                     } else {
-                        BitAnd
+                        Ampersand
                     }
                 }
                 '|' => {
@@ -284,7 +294,7 @@ impl<'a> Lexer<'a> {
                         self.bump();
                         BitOrAssign
                     } else {
-                        BitOr
+                        Pipe
                     }
                 }
                 '*' => {
@@ -309,7 +319,7 @@ impl<'a> Lexer<'a> {
                         self.bump();
                         BitXorAssign
                     } else {
-                        BitXor
+                        Caret
                     }
                 }
                 ':' => {
@@ -320,7 +330,7 @@ impl<'a> Lexer<'a> {
                         Colon
                     }
                 }
-                '~' => BitNot,
+                '~' => Tilde,
                 ';' => Semicolon,
                 ',' => Comma,
                 '.' => Dot,
@@ -333,8 +343,12 @@ impl<'a> Lexer<'a> {
                 '@' => At,
                 '?' => Question,
                 _ => Unknown,
-            },
-            None => Unknown,
-        }
+            }
+        } else {
+            Unknown
+        };
+
+        let literal = &self.input[start..self.cursor + 1];
+        (literal, kind)
     }
 }

@@ -1,5 +1,5 @@
 #![allow(unused, warnings)]
-
+//
 mod ast;
 mod eval;
 mod lexer;
@@ -11,5 +11,3 @@ pub use eval::*;
 pub use lexer::*;
 pub use parser::*;
 pub use token::*;
-
-mod macros;
