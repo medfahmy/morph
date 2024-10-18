@@ -46,6 +46,12 @@ trait ToString = {
 };
 
 
+s | String;
+s = "hello";
+
+foo | bool
+foo = s.contains("hell") && !s.is_empty();
+
 
 type Foo<T> =
 | Bar(T)

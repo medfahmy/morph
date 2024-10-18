@@ -12,7 +12,7 @@ pub struct Token<'a> {
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     // Identifiers
-    Identifier,
+    Ident,
 
     // Literals
     Bool,  //

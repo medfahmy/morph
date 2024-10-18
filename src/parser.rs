@@ -16,7 +16,7 @@ pub struct Error<'a> {
 type Result<'a, T> = std::result::Result<T, Error<'a>>;
 
 impl<'a> Parser<'a> {
-    pub fn parse(input: &'a str) -> Result<Program<'a>> {
+    pub fn parse(input: &'a str) -> Result<Ast<'a>> {
         let mut parser = Self {
             lexer: Lexer::new(input),
             curr: None,
@@ -24,15 +24,15 @@ impl<'a> Parser<'a> {
         };
         parser.bump();
         parser.bump();
-        let mut program = Program::default();
+        let mut ast = Ast::default();
 
         while parser.curr().is_some() {
-            parser.parse_statement().map(|statement| {
-                program.push(statement)
+            parser.parse_stmt().map(|stmt| {
+                ast.add_stmt(stmt)
             });
         }
 
-        Ok(program)
+        Ok(ast)
     }
 
     fn bump(&mut self) {
@@ -56,14 +56,14 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_statement(&mut self) -> Result<Statement<'a>> {
+    fn parse_stmt(&mut self) -> Result<StmtRef> {
         if let Some(token) = self.curr() {
             match token.kind {
                 Identifier => self.parse_declaration(),
-                Return => self.parse_return_statement(),
-                Loop | For | While => self.parse_loop_statement(),
-                Function => self.parse_function_statement(),
-                Spawn => self.parse_spawn_statement(),
+                Return => self.parse_return_stmt(),
+                Loop | For | While => self.parse_loop_stmt(),
+                Function => self.parse_function_stmt(),
+                Spawn => self.parse_spawn_stmt(),
                 _ => unreachable!(),
             }
         } else {
@@ -71,39 +71,39 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_expression(&mut self) -> Result<Expression<'a>> {
+    fn parse_expr(&mut self) -> Result<ExprRef> {
         todo!()
     }
 
-    fn parse_declaration(&mut self) -> Result<Statement<'a>> {
+    fn parse_declaration(&mut self) -> Result<StmtRef> {
         match self.peek() {
             Some(Token { kind: Assign, .. }) => {
         self.bump();
-        self.parse_expression().map(|expression| Statement::Expr(expression))
+        self.parse_expr().map(|expr| StmtRef::Expr(expr))
             },
             Some(Token { kind: Pipe, .. }) => self.parse_type_signature(),
             _ => Err(self.peek_error("Expected binding or type signature")),
         }
     }
 
-    fn parse_type_signature(&mut self) -> Result<Statement<'a>> {
+    fn parse_type_signature(&mut self) -> Result<StmtRef> {
         self.bump();
         todo!()
     }
 
-    fn parse_return_statement(&mut self) -> Result<Statement<'a>> {
+    fn parse_return_stmt(&mut self) -> Result<StmtRef> {
         todo!()
     }
 
-    fn parse_loop_statement(&mut self) -> Result<Statement<'a>> {
+    fn parse_loop_stmt(&mut self) -> Result<StmtRef> {
         todo!()
     }
 
-    fn parse_function_statement(&mut self) -> Result<Statement<'a>> {
+    fn parse_function_stmt(&mut self) -> Result<StmtRef> {
         todo!()
     }
 
-    fn parse_spawn_statement(&mut self) -> Result<Statement<'a>> {
+    fn parse_spawn_stmt(&mut self) -> Result<StmtRef> {
         todo!()
     }
 }

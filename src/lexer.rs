@@ -2,7 +2,7 @@ use crate::{Token, TokenKind, TokenKind::*};
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
-    input: &'a str,
+    source: &'a str,
     cursor: usize,
     line: usize,
     column: usize,
@@ -37,9 +37,9 @@ impl<'a> Iterator for Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Self {
+    pub fn new(source: &'a str) -> Self {
         Lexer {
-            input,
+            source,
             cursor: 0,
             line: 1,
             column: 1,
@@ -47,15 +47,15 @@ impl<'a> Lexer<'a> {
     }
 
     fn curr(&self) -> Option<char> {
-        self.input.chars().nth(self.cursor)
+        self.source.chars().nth(self.cursor)
     }
 
     fn peek(&self) -> Option<char> {
-        self.input.chars().nth(self.cursor + 1)
+        self.source.chars().nth(self.cursor + 1)
     }
 
     fn bump(&mut self) {
-        if self.cursor < self.input.len() {
+        if self.cursor < self.source.len() {
             self.cursor += 1;
 
             if let Some('\n') = self.peek() {
@@ -82,7 +82,7 @@ impl<'a> Lexer<'a> {
 
         if let Some('_') = self.curr() {
             if self.peek().is_none() || self.peek().is_some_and(|peek| peek.is_whitespace()) {
-                return (&self.input[start..start + 1], Underscore);
+                return (&self.source[start..start + 1], Underscore);
             }
         }
 
@@ -94,7 +94,7 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let word = &self.input[start..self.cursor + 1];
+        let word = &self.source[start..self.cursor + 1];
 
         let kind = match word {
             "true" | "false" => Bool,
@@ -119,7 +119,7 @@ impl<'a> Lexer<'a> {
             "const" => Const,
             "spawn" => Spawn,
             "derive" => Derive,
-            _ => Identifier,
+            _ => Ident,
         };
 
         (word, kind)
@@ -136,7 +136,7 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        let number_str = &self.input[start..self.cursor + 1];
+        let number_str = &self.source[start..self.cursor + 1];
         let kind = if number_str.contains(".") { Float } else { Int };
         (number_str, kind)
     }
@@ -144,7 +144,7 @@ impl<'a> Lexer<'a> {
     fn read_char(&mut self) -> (&'a str, TokenKind) {
         let start = self.cursor;
         self.bump();
-        let ch = &self.input[self.cursor..self.cursor + 1];
+        let ch = &self.source[self.cursor..self.cursor + 1];
 
         if self.curr().is_some() {
             self.bump();
@@ -153,10 +153,10 @@ impl<'a> Lexer<'a> {
                 self.bump();
                 (ch, Char)
             } else {
-                (&self.input[start..self.cursor + 1], Unknown)
+                (&self.source[start..self.cursor + 1], Unknown)
             }
         } else {
-            (&self.input[start..self.cursor + 1], Unknown)
+            (&self.source[start..self.cursor + 1], Unknown)
         }
     }
 
@@ -168,7 +168,7 @@ impl<'a> Lexer<'a> {
             self.bump();
 
             if ch == '\n' {
-                return (&self.input[start..self.cursor + 1], UntermDoubleQuote);
+                return (&self.source[start..self.cursor + 1], UntermDoubleQuote);
             }
 
             if ch == '"' {
@@ -177,10 +177,10 @@ impl<'a> Lexer<'a> {
         }
 
         if self.peek().is_none() {
-            return (&self.input[start..self.cursor + 1], UntermDoubleQuote);
+            return (&self.source[start..self.cursor + 1], UntermDoubleQuote);
         }
 
-        (&self.input[start..self.cursor], Str)
+        (&self.source[start..self.cursor], Str)
     }
 
     fn read_operator(&mut self) -> (&'a str, TokenKind) {
@@ -348,7 +348,7 @@ impl<'a> Lexer<'a> {
             Unknown
         };
 
-        let literal = &self.input[start..self.cursor + 1];
+        let literal = &self.source[start..self.cursor + 1];
         (literal, kind)
     }
 }

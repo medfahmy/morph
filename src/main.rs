@@ -17,8 +17,8 @@ fn main() {
         //     println!("{:?}", token);
         // }
 
-        let program = Parser::parse(&buf);
+        let ast = Parser::parse(&buf);
 
-        println!("{:?}", program);
+        println!("{:?}", ast);
     }
 }

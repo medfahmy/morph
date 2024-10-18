@@ -1,66 +1,74 @@
-use crate::Token;
 use std::collections::HashMap;
 
-#[derive(Default, Debug)]
-pub struct Program<'a> {
-    statements: Vec<Statement<'a>>,
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct ExprRef(usize);
+
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct StmtRef(usize);
+
+#[derive(Debug, Default)]
+pub struct Ast<'a> {
+    exprs: Vec<Expr<'a>>,
+    stmts: Vec<Stmt>,
+    parents: Vec<ExprRef>,
+    levels: Vec<usize>,
 }
 
-pub struct ParseError<'a> {
-    pub message: &'static str,
-    pub token: Option<Token<'a>>,
-}
+impl<'a> Ast<'a> {
+    pub fn add_expr(&mut self, expr: Expr) -> ExprRef {
+        let idx = self.exprs.len();
+        self.exprs.push(expr);
+        ExprRef(idx)
+    }
 
-impl<'a> Program<'a> {
-    pub fn push(&mut self, statement: Statement<'a>) {
-        self.statements.push(statement)
+    pub fn add_stmt(&mut self, stmt: Stmt) -> StmtRef {
+        let idx = self.stmts.len();
+        self.stmts.push(stmt);
+        StmtRef(idx)
+    }
+
+    pub fn get_expr(&self, expr_ref: ExprRef) -> Option<&'a Expr> {
+        self.exprs.get(expr_ref.0)
+    }
+
+    pub fn get_stmt(&self, stmt_ref: StmtRef) -> Option<&'a Stmt> {
+        self.stmts.get(stmt_ref.0)
     }
 }
 
 #[derive(Debug)]
-pub enum Statement<'a> {
-    Variable {
-        identifier: &'a str,
-        value: Expression<'a>,
-    },
-    Return {
-        value: Expression<'a>,
-    },
-    Loop {
-        expression: Expression<'a>,
-        body: Vec<Statement<'a>>,
-    },
-    For {
-        expression: Vec<Statement<'a>>,
-        body: Vec<Statement<'a>>,
-    },
-    While {
-        expression: Vec<Statement<'a>>,
-        body: Vec<Statement<'a>>,
-    },
-    Call {
-        function: &'a str,
-        args: Vec<Expression<'a>>,
-    },
-    Scope {
-        body: Vec<Statement<'a>>,
-    },
-    Expr(Expression<'a>),
-    Spawn(Vec<Statement<'a>>),
-}
-
-#[derive(Debug)]
-pub enum Expression<'a> {
+pub enum Expr<'a> {
     Unit,
-    Underscore,
-    Int(i64),
-    Float(f64),
-    Bool(bool),
-    Char(char),
+    Dash,
+    Int(&'a str),
+    Float(&'a str),
+    Bool(&'a str),
+    Char(&'a str),
     Str(&'a str),
-    Identifier(&'a str),
-    Struct,
-    Enum,
+    Ident(&'a str),
+    Array(&'a str),
+    Prefix {
+        operator: Operator,
+        operand: ExprRef,
+    },
+    Infix {
+        operator: Operator,
+        left: ExprRef,
+        right: ExprRef,
+    },
+    If {
+        condition: ExprRef,
+        consequent: ExprRef,
+        alternative: Option<ExprRef>,
+    },
+    Match {
+        matched: ExprRef,
+        arms: Vec<(ExprRef, Vec<StmtRef>)>,
+    },
+    Function {
+        args: Vec<ExprRef>,
+        body: Vec<StmtRef>,
+    },
     Tuple,
     Block,
     Path,
@@ -68,29 +76,40 @@ pub enum Expression<'a> {
     Field,
     Closure,
     Method,
-    Prefix {
-        operator: Operator,
-        operand: Box<Expression<'a>>,
-    },
-    Infix {
-        operator: Operator,
-        left: Box<Expression<'a>>,
-        right: Box<Expression<'a>>,
-    },
-    If {
-        condition: Box<Expression<'a>>,
-        consequent: Box<Expression<'a>>,
-        alternative: Option<Box<Expression<'a>>>,
-    },
-    Match {
-        matched: Box<Expression<'a>>,
-        match_arms: HashMap<Expression<'a>, Vec<Statement<'a>>>,
-    },
-    Function {
-        args: Vec<&'a str>,
-        body: Vec<Statement<'a>>,
-    },
     Range,
+    Macro,
+}
+
+#[derive(Debug)]
+pub enum Stmt {
+    Binding {
+        ident: ExprRef,
+        value: ExprRef,
+    },
+    Return {
+        value: ExprRef,
+    },
+    Loop {
+        expr: ExprRef,
+        body: Vec<StmtRef>,
+    },
+    For {
+        expr: ExprRef,
+        body: Vec<StmtRef>,
+    },
+    While {
+        expr: ExprRef,
+        body: Vec<StmtRef>,
+    },
+    Call {
+        function: ExprRef,
+        args: Vec<ExprRef>,
+    },
+    Scope {
+        body: Vec<StmtRef>,
+    },
+    Expr(ExprRef),
+    Spawn(Vec<StmtRef>),
 }
 
 #[derive(Debug)]
@@ -110,4 +129,36 @@ pub enum Operator {
     And,
     Or,
     Not,
+}
+
+#[derive(Debug)]
+pub struct TypeRef(usize);
+
+#[derive(Debug)]
+pub enum Type<'a> {
+    Unit,
+    Bool,
+    Int,
+    Float,
+    Char,
+    String,
+    Tuple(Vec<TypeRef>),
+    Function(TypeRef, TypeRef),
+    Custom(&'a str),
+}
+
+#[derive(Debug)]
+pub struct TypedAst<'a> {
+    ast: Ast<'a>,
+    expr_types: HashMap<ExprRef, Type>,
+}
+
+impl<'a> TypedAst<'a> {
+    pub fn get_type(&self, expr_ref: ExprRef) -> Option<&Type> {
+        self.expr_types.get(&expr_ref)
+    }
+
+    pub fn infer_types(&mut self) -> Result<(), Vec<AstError>> {
+        todo!()
+    }
 }

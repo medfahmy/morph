@@ -1,10 +1,10 @@
-use crate::{Expression, Program, Statement};
+use crate::{Expr, Program, Stmt};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Env<'a> {
-    symbol_table: HashMap<&'a str, Box<Expression<'a>>>,
+    symbol_table: HashMap<&'a str, Box<Expr<'a>>>,
     outer_scope: Option<Rc<RefCell<Env<'a>>>>,
 }
 
@@ -30,7 +30,7 @@ pub enum Value<'a> {
     Error(String),
     Function {
         args: Vec<&'a str>,
-        body: Vec<Statement<'a>>,
+        body: Vec<Stmt<'a>>,
         outer_scope: Env<'a>,
     },
 }
@@ -39,19 +39,19 @@ pub trait Eval {
     fn eval(&self, env: &Env) -> Value;
 }
 
-impl<'a> Eval for Expression<'a> {
+impl<'a> Eval for Expr<'a> {
     fn eval(&self, _: &Env) -> Value {
         match self {
-            Expression::Int(n) => Value::Int(*n),
-            Expression::Float(n) => Value::Float(*n),
-            Expression::Bool(b) => Value::Bool(*b),
-            Expression::Char(ch) => Value::Char(*ch),
-            Expression::Str(s) => Value::Str(s),
-            Expression::Identifier(ident) => todo!(),
-            Expression::Prefix { operator, operand } => {
+            Expr::Int(n) => Value::Int(*n),
+            Expr::Float(n) => Value::Float(*n),
+            Expr::Bool(b) => Value::Bool(*b),
+            Expr::Char(ch) => Value::Char(*ch),
+            Expr::Str(s) => Value::Str(s),
+            Expr::Identifier(ident) => todo!(),
+            Expr::Prefix { operator, operand } => {
                 todo!()
             }
-            Expression::Infix {
+            Expr::Infix {
                 operator,
                 left,
                 right,
@@ -63,13 +63,13 @@ impl<'a> Eval for Expression<'a> {
     }
 }
 
-impl<'a> Eval for Statement<'a> {
+impl<'a> Eval for Stmt<'a> {
     fn eval(&self, env: &Env) -> Value {
         todo!()
     }
 }
 
-impl<'a> Eval for Vec<Statement<'a>> {
+impl<'a> Eval for Vec<Stmt<'a>> {
     fn eval(&self, env: &Env) -> Value {
         todo!()
     }
