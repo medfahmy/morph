@@ -1,4 +1,4 @@
-use morph::Parser;
+use morph::parser::Parser;
 use std::io::{stdin, stdout, Write};
 
 fn main() {
@@ -6,6 +6,7 @@ fn main() {
     let mut stdout = stdout();
 
     println!("Morph v.0.1.0");
+    println!();
 
     loop {
         print!(">> ");
@@ -21,8 +22,10 @@ fn main() {
         let ast = parser.parse();
 
         match ast {
-            Ok(ast) => for stmt in ast.stmts() {
-                println!("{:?}", stmt);
+            Ok(ast) => {
+                for stmt in ast.stmts() {
+                    println!("{:?}", stmt);
+                }
             }
             Err(err) => println!("{:?}", err),
         }
