@@ -1,6 +1,3 @@
-use std::fmt;
-use TokenKind::*;
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,

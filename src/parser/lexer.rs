@@ -1,4 +1,4 @@
-use crate::{Token, TokenKind, TokenKind::*};
+use super::{Token, TokenKind, TokenKind::*};
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -165,7 +165,10 @@ impl Lexer {
             self.bump();
 
             if ch == '\n' {
-                return (self.source[start..self.cursor + 1].to_owned(), UntermDoubleQuote);
+                return (
+                    self.source[start..self.cursor + 1].to_owned(),
+                    UntermDoubleQuote,
+                );
             }
 
             if ch == '"' {
@@ -174,7 +177,10 @@ impl Lexer {
         }
 
         if self.peek().is_none() {
-            return (self.source[start..self.cursor + 1].to_owned(), UntermDoubleQuote);
+            return (
+                self.source[start..self.cursor + 1].to_owned(),
+                UntermDoubleQuote,
+            );
         }
 
         (self.source[start..self.cursor].to_owned(), Str)

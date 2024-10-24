@@ -1,9 +1,11 @@
-use morph::{Lexer, Parser};
+use morph::Parser;
 use std::io::{stdin, stdout, Write};
 
 fn main() {
     let stdin = stdin();
     let mut stdout = stdout();
+
+    println!("Morph v.0.1.0");
 
     loop {
         print!(">> ");
@@ -11,14 +13,20 @@ fn main() {
         let mut buf = String::new();
         stdin.read_line(&mut buf).unwrap();
 
-        let lexer = Lexer::new(&buf);
-
         // for token in lexer {
         //     println!("{:?}", token);
         // }
 
-        let ast = Parser::parse(&buf);
+        let mut parser = Parser::new(&buf);
+        let ast = parser.parse();
 
-        println!("{:?}", ast);
+        match ast {
+            Ok(ast) => for stmt in ast.stmts() {
+                println!("{:?}", stmt);
+            }
+            Err(err) => println!("{:?}", err),
+        }
+
+        println!();
     }
 }

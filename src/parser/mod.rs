@@ -1,4 +1,15 @@
-use crate::*;
+mod ast;
+mod errors;
+mod lexer;
+mod list;
+mod token;
+
+pub use ast::*;
+use errors::*;
+use lexer::*;
+use list::*;
+use token::*;
+
 use TokenKind::*;
 
 pub struct Parser {
@@ -37,10 +48,9 @@ impl Parser {
     }
 
     fn parse_stmt(&mut self, start: Token) -> Result<Stmt> {
-        dbg!(&start.kind);
         match start.kind {
             Ident => self.parse_ident(),
-            _ => todo!()
+            _ => todo!(),
         }
     }
 
@@ -55,7 +65,10 @@ impl Parser {
                     Ok(Stmt::Binding(ident, expr))
                 }
                 Pipe => todo!(),
-                _ => Err(Error("Expected binding or type signature", self.peek.clone())),
+                _ => Err(Error(
+                    "Expected binding or type signature",
+                    self.peek.clone(),
+                )),
             }
         } else {
             Ok(Stmt::Expr(Expr::Ident(ident)))
@@ -69,10 +82,13 @@ impl Parser {
                     self.bump();
                     Ok(Expr::Ident(self.curr.clone().unwrap().literal))
                 }
-                _ => todo!()
+                _ => todo!(),
             }
         } else {
-            Err(Error("Expected expression", self.curr.clone()))
+            Err(Error(
+                "Expected expression after assignment",
+                self.curr.clone(),
+            ))
         }
     }
 }

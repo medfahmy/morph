@@ -1,3 +1,5 @@
+use crate::eval::{Env, Eval, Value};
+
 #[derive(Debug)]
 pub struct Ast {
     stmts: Vec<Stmt>,
@@ -28,7 +30,6 @@ pub enum Stmt {
     Spawn(Vec<Stmt>),
     Select(Vec<Stmt>),
 }
-
 
 #[derive(Debug)]
 pub enum Expr {
@@ -155,3 +156,27 @@ pub enum Operator {
 //     Function(Box<Type>, Box<Type>),
 //     NewType(String),
 // }
+
+impl Eval for Expr {
+    fn eval(&self, _: &Env) -> Value {
+        todo!()
+    }
+}
+
+impl Eval for Stmt {
+    fn eval(&self, env: &Env) -> Value {
+        todo!()
+    }
+}
+
+impl Eval for Vec<Stmt> {
+    fn eval(&self, env: &Env) -> Value {
+        todo!()
+    }
+}
+
+impl Eval for Ast {
+    fn eval(&self, env: &Env) -> Value {
+        todo!()
+    }
+}
