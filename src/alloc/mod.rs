@@ -1,4 +1,6 @@
 use std::alloc::{alloc, dealloc, Layout};
+use std::cell::UnsafeCell;
+use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 pub const BLOCK_SIZE_BITS: usize = 15;
@@ -7,6 +9,7 @@ pub const LINE_SIZE_BITS: usize = 7;
 pub const LINE_SIZE: usize = 1 << LINE_SIZE_BITS; // 128b
 pub const LIVE_COUNT: usize = BLOCK_SIZE / LINE_SIZE; // 256
 pub const BLOCK_CAPACITY: usize = BLOCK_SIZE - LIVE_COUNT;
+pub const ALIGN_MASK: usize = 1;
 
 trait Alloc {
     fn alloc<T>(&self, object: T) -> *const T;
@@ -70,6 +73,10 @@ pub struct BumpBlock {
 }
 
 impl BumpBlock {
+    pub fn new() -> Result<Self, AllocError> {
+        todo!()
+    }
+
     pub fn inner_alloc(&mut self, size: usize) -> Option<*const u8> {
         let ptr = self.cursor as usize;
         let limit = self.limit as usize;
@@ -142,4 +149,46 @@ pub struct BlockList {
     head: Option<BumpBlock>,
     overflow: Option<BumpBlock>,
     rest: Vec<BumpBlock>,
+}
+
+pub enum AllocError {}
+
+impl BlockList {
+    fn overflow_alloc(&mut self, size: usize) -> Result<*const u8, AllocError> {
+        let space = match self.overflow {
+            Some(ref mut overflow) => match overflow.inner_alloc(size) {
+                Some(space) => space,
+                None => {
+                    let previous = std::mem::replace(overflow, BumpBlock::new()?);
+                    self.rest.push(previous);
+                    overflow.inner_alloc(size).expect("Unexpected error")
+                }
+            },
+            None => {
+                let mut overflow = BumpBlock::new()?;
+                let space = overflow
+                    .inner_alloc(size)
+                    .expect("Object doesn't fit in block");
+                self.overflow = Some(overflow);
+                space
+            }
+        };
+
+        Ok(space)
+    }
+}
+
+pub struct Heap<H> {
+    blocks: UnsafeCell<BlockList>,
+    _header_type: PhantomData<*const H>,
+}
+
+pub struct SizeClass {}
+
+impl<H> Heap<H> {
+    pub fn find_space(&self, size: usize, size_class: SizeClass) -> Result<*const u8, AllocError> {
+        let blocks = unsafe { &mut *self.blocks.get() };
+
+        todo!()
+    }
 }

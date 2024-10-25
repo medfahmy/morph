@@ -34,7 +34,6 @@ pub enum Stmt {
 #[derive(Debug)]
 pub enum Expr {
     Unit,
-    Dash,
     Int(String),
     Float(String),
     Bool(String),

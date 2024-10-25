@@ -3,46 +3,44 @@ main | () -> Never;
 main = () -> {
     x mut = 1;
     x += 1;
-    println(x);
+    println { x };
 };
 
-increment = (i mut) -> {
+increment = i mut -> {
     i += 1;
 };
 
 use std.format;
 
-trait Format = {
-    format | (Self, format.Formatter) -> format.Result;
-};
+Format :: format | Self, format.Formatter -> format.Result;
 
-type Option<T: Format> =
-| Some(T)
+Option :: T: Format ->
+| Some { T }
 | None 
 derive Format;
 
-type Point<T> = {
+Point<T: Format> ::
     x: T,
     y: T,
 } derive Format;
 
-type Node<T> = {
+Node<T> :: {
     value: T,
     next: Option<Node<T>>,
 };
 
-type LinkedList<T> = {
+LinkedList<T> :: {
     head: Node<T>,
 };
 
 impl<T> Format for Node<T> {
-    format = (self, f) -> {
-        f.write(self)
+    format = self, f -> {
+        f.write { self }
     };
 };
 
 trait ToString = {
-    to_string | (Self) -> String;
+    to_string | Self -> String;
 };
 
 
@@ -50,7 +48,7 @@ s | String;
 s = "hello";
 
 foo | bool
-foo = s.contains("hell") && !s.is_empty();
+foo = s.contains { "hell" } && !s.is_empty;
 
 
 type Foo<T> =
@@ -61,93 +59,96 @@ type Foo<T> =
 
 impl Point<T: Add> {
     distance | Self, Self -> Self;
-    distance = (self, other) -> {
+    distance = self, other -> {
         let dx = p2.x - p1.x;
         let dy = p2.y - p1.y;
-        (dx * dx + dy * dy).sqrt()
+        { dx * dx + dy * dy }.sqrt
     };
 };
 
 distance(p1, p2) = {
     let dx = p2.x - p1.x;
     let dy = p2.y - p1.y;
-    (dx * dx + dy * dy).sqrt()
+    { dx * dx + dy * dy }.sqrt
 };
 
 main = () -> {
     count = 0;
-    points = [Point{x: 0, y: 0};, Point{x: 3, y: 4}];
+    points = List { 
+        Point { x: 0, y: 0 }, 
+        Point { x: 3, y: 4 }, 
+    };
     
-    (sender, receiver) = channel();
-    
+    sender, receiver = channel;
+  
     spawn {
         for p in points {
-            sender.send(p);
+            sender.send { p };
         };
-        sender.close();
+        sender.close;
     };
     
-    while Some(point) = receiver.receive() {
+    while Some { point } = receiver.receive {
         count += 1;
-        println("Received point: ({};, {})", point.x, point.y);
+        println { "Received point: ({};, {})", point.x, point.y };
     };
     
-    fprintln("processed {}; points", count);
+    println { "processed {}; points", count };
     
-    d = distance(points[0], points[1]);
-    fprintln("Distance: {};", d);
+    d = distance { points.0, points.1 };
+    println { "Distance: {};", d };
 };;
 
-add = (a, b) -> {
+add = a, b -> {
     a + b
 };
 
-apply = (f, a) -> {
+apply = f, a -> {
     f(a)
 };
 
-increment = (a) -> {
+increment = a -> {
     a + 1
 };
 
-main = () -> {
-    print(apply(increment, a));
+main = -> {
+    print { apply { increment, a } };
 };
 
-identity = (x) -> {
+identity = x -> {
     x
 };
 
-maybe_add = (x, y) -> {
+maybe_add = x, y -> {
     match x {
-        Some(val) => val + y,
+        Some { val } => val + y,
         None => y,
     };
 };
 
-apply_twice = (f, x) -> {
-    f(f(x))
+apply_twice = f, x -> {
+    f { f { x } }
 };
 
-read_file = (path) -> {
-    fs.read_to_string(path)
+read_file = path -> {
+    std.fs.read_to_string { path }
 };
 
-divide = (a, b) -> {
+divide = a, b -> {
     if b == 0 {
-        Err("Division by zero")
+        Err { "Division by zero" }
     } else {
-        Ok(a / b)
+        Ok { a / b }
     }
 };
 
-calculate = () -> {
-    let res1 = divide(10, 2)?;
-    let res2 = divide(20, res1)?;
-    Ok(res2)
+calculate = -> {
+    let res1 = divide { 10, 2 }.try;
+    let res2 = divide { 20, res1 }.try;
+    Ok { res2 }
 };
 
-check_value = (x) -> {
+check_value = x -> {
     if x > 0 {
         "Positive"
     } else {
@@ -155,22 +156,22 @@ check_value = (x) -> {
     };
 };
 
-process_result = (res) -> {
+process_result = res -> {
     match res {
-        Ok(val) => val,
-        Err(_) => 0,
+        Ok { val } => val,
+        Err { _ } => 0,
     }
 };
 
-producer = (channel) -> {
+producer = channel -> {
     for i in 0..10 {
-        channel.send(i);   
+        channel.send { i };   
     };
 };
 
-consumer = (channel) -> {
-    while Some(data) = channel.receive() {   
-        println!("Received: {};", data);
+consumer = channel -> {
+    while Some { data } = channel.receive {
+        println! { "Received: {};", data };
     };
 };
 
@@ -205,10 +206,10 @@ select_example = (channel1, channel2) -> {
 };
 
 main = () -> {
-    channel = Channel.with_capacity(5);  
+    channel = Channel.with_capacity { 5 };  
     
-    spawn(producer(channel.clone()));  
-    spawn(consumer(channel));
+    spawn { producer { channel.clone } };  
+    spawn { consumer { channel } };
 };
 
 type Counter {

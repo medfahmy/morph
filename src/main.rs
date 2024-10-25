@@ -5,7 +5,7 @@ fn main() {
     let stdin = stdin();
     let mut stdout = stdout();
 
-    println!("Morph v.0.1.0");
+    println!("Morph v0.1.0");
     println!();
 
     loop {
