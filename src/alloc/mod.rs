@@ -23,15 +23,15 @@ pub struct Block {
     size: BlockSize,
 }
 
-pub enum BlockError {
+pub enum AllocError {
     InvalidSize,
     OOM,
 }
 
 impl Block {
-    pub fn new(size: BlockSize) -> Result<Self, BlockError> {
+    pub fn new(size: BlockSize) -> Result<Self, AllocError> {
         if !size.is_power_of_two() {
-            return Err(BlockError::InvalidSize);
+            return Err(AllocError::InvalidSize);
         }
 
         unsafe {
@@ -39,7 +39,7 @@ impl Block {
             let ptr = alloc(layout);
 
             if ptr.is_null() {
-                return Err(BlockError::OOM);
+                return Err(AllocError::OOM);
             }
 
             // address & alignment (size - 1) should be a mutually exclusive set of bits
@@ -151,8 +151,6 @@ pub struct BlockList {
     rest: Vec<BumpBlock>,
 }
 
-pub enum AllocError {}
-
 impl BlockList {
     fn overflow_alloc(&mut self, size: usize) -> Result<*const u8, AllocError> {
         let space = match self.overflow {
@@ -191,4 +189,21 @@ impl<H> Heap<H> {
 
         todo!()
     }
+}
+
+pub trait AllocTypeId: Copy + Clone {}
+pub trait AllocObject<TypeId> {}
+pub struct Mark {}
+pub struct ArraySize {}
+
+pub trait AllocHeader: Sized {
+    type TypeId: AllocTypeId;
+
+    fn new<O: AllocObject<Self::TypeId>>(size: u32, size_class: SizeClass, mark: Mark) -> Self;
+    fn new_array(size: ArraySize, size_class: SizeClass, mark: Mark) -> Self;
+    fn mark(&mut self);
+    fn is_marked(&self) -> bool;
+    fn size_class(&self) -> SizeClass;
+    fn size(&self) -> u32;
+    fn type_id(&self) -> Self::TypeId;
 }

@@ -1,3 +1,25 @@
+Syntax Error: expected SEMICOLON [syntax-error]
+Syntax Error: expected expression, item or let statement [syntax-error]
+
+    Checking db v0.1.0 (/home/mohamed/ws/codd)
+error[E0599]: no method named `get_key` found for reference `&Node` in the current scope
+  --> src/main.rs:62:32
+   |
+62 |             let cmp = cmp(self.get_key(i), key);
+   |                                ^^^^^^^ method not found in `&Node`
+
+error[E0425]: cannot find function `cmp` in this scope
+  --> src/main.rs:62:23
+   |
+62 |             let cmp = cmp(self.get_key(i), key);
+   |                       ^^^ not found in this scope
+
+Some errors have detailed explanations: E0425, E0599.
+For more information about an error, try `rustc --explain E0425`.
+error: could not compile `db` (bin "db") due to 2 previous errors
+
+
+
 //    Compiling parcom v0.1.0 (/home/mohamed/ws/parcom)
 // error[E0601]: `main` function not found in crate `parcom`
 //   |
